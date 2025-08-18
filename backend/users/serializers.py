@@ -1,27 +1,67 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        # Default behavior but use email instead of username
+        data = super().validate(attrs)
+        refresh = self.get_token(self.user)
+        
+        # Add custom claims
+        data['user'] = {
+            'id': self.user.id,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'email': self.user.email,
+            'role': self.user.role,
+        }
+        return data
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
+    name = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'role']
+        fields = ['name', 'email', 'password']
+        extra_kwargs = {
+            'email': {'required': True}
+        }
 
     def create(self, validated_data):
+        # Split the full name into first and last name
+        full_name = validated_data.pop('name', '')
+        name_parts = full_name.strip().split(' ', 1)
+        first_name = name_parts[0] if name_parts else ''
+        last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+        # Create user with email as username and set role to ADMIN
         user = User.objects.create_user(
-            username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data['password'],
-            role=validated_data.get('role', 'ADMIN'),
-            first_name='',
-            last_name=''
+            first_name=first_name,
+            last_name=last_name,
+            role='ADMIN'
         )
         return user
 
+    def to_representation(self, instance):
+        """Customize the response to include full name"""
+        ret = super().to_representation(instance)
+        ret['name'] = f"{instance.first_name} {instance.last_name}".strip()
+        ret['role'] = instance.role
+        return ret
+
 class UserSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'role', 'first_name', 'last_name']
+        fields = ['id', 'name', 'first_name', 'last_name', 'email', 'role']
+        read_only_fields = ['id', 'role']
+
+    def get_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()

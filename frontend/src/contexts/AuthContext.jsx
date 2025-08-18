@@ -11,9 +11,10 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const userData = await authAPI.getCurrentUser();
+          const userData = await authAPI.getMe();
           setUser(userData);
-        } catch {
+        } catch (error) {
+          console.error('Auth initialization error:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
         }
@@ -24,22 +25,20 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = async (username, password) => {
+  const login = async (email, password) => {
     try {
-      const response = await authAPI.login({ username, password });
-      localStorage.setItem('token', response.access);
+      const response = await authAPI.login({ email, password });
       
-      // Get user data using the token
-      const userData = await authAPI.getMe();
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
+      // The login method in api.js already handles token storage
+      // and returns the user data directly
+      setUser(response);
       
-      return { success: true, userData };
+      return { success: true, userData: response };
     } catch (error) {
       console.error('Login error:', error);
       return { 
         success: false, 
-        error: error.response?.data?.detail || 'Invalid username or password' 
+        error: error.response?.data?.detail || 'Invalid email or password' 
       };
     }
   };
@@ -54,13 +53,12 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
-    login,
-    logout,
     loading,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'ADMIN',
-    isSupervisor: user?.role === 'SUPERVISOR',
     isIntern: user?.role === 'INTERN',
+    login,
+    logout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

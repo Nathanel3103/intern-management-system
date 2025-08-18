@@ -22,7 +22,7 @@ A full-stack application for managing interns with role-based access control (Ad
 ## Tech Stack
 
 - **Frontend**: React 18, Vite, React Router 6
-- **Styling**: CSS Modules
+- **Styling**: Tailwind CSS Modules
 - **Backend**: Django 5.0, Django REST Framework, JWT Authentication
 - **Database**: SQLite (development), PostgreSQL (production-ready)
 

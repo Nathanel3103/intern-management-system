@@ -5,8 +5,8 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// Import the Dashboard component
-import Dashboard from './components/Dashboard';
+// Import the DashboardPage component
+import DashboardPage from './pages/DashboardPage';
 const Unauthorized = () => <div>Unauthorized Access</div>;
 
 function App() {
@@ -25,7 +25,7 @@ function App() {
               path="/dashboard" 
               element={
                 <ProtectedRoute roles={['ADMIN', 'INTERN']}>
-                  <Dashboard />
+                  <DashboardPage />
                 </ProtectedRoute>
               } 
             />
