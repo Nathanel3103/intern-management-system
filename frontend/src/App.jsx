@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Import the DashboardPage component
 import DashboardPage from './pages/DashboardPage';
+import InternDashboard from './components/Interndashboard/InternDashboard.jsx';
 const Unauthorized = () => <div>Unauthorized Access</div>;
 
 function App() {
@@ -20,22 +21,42 @@ function App() {
             <Route path="/unauthorized" element={<Unauthorized />} />
             
             {/* Protected Routes */}
-            {/* Dashboard route - accessible to all authenticated users */}
+            {/* Admin Dashboard */}
             <Route 
               path="/dashboard" 
               element={
-                <ProtectedRoute roles={['ADMIN', 'INTERN']}>
+                <ProtectedRoute roles={['ADMIN']}>
                   <DashboardPage />
                 </ProtectedRoute>
               } 
             />
+            {/* Intern Dashboard */}
+            <Route 
+              path="/intern" 
+              element={
+                <ProtectedRoute roles={['INTERN']}>
+                  <InternDashboard />
+                </ProtectedRoute>
+              } 
+            />
             
-            {/* Redirect root to login and authenticated users to dashboard */}
+            {/* Redirect root to login and authenticated users to role-based home */}
             <Route 
               path="/" 
               element={
-                localStorage.getItem('token') ? 
-                <Navigate to="/dashboard" replace /> : 
+                localStorage.getItem('token') ? (
+                  // Decide based on stored user in localStorage if available, fallback to /dashboard
+                  (() => {
+                    try {
+                      const userStr = localStorage.getItem('user');
+                      const user = userStr ? JSON.parse(userStr) : null;
+                      if (user?.role === 'INTERN') return <Navigate to="/intern" replace />;
+                      return <Navigate to="/dashboard" replace />;
+                    } catch {
+                      return <Navigate to="/dashboard" replace />;
+                    }
+                  })()
+                ) : 
                 <Navigate to="/login" replace />
               } 
             />

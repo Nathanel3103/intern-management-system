@@ -107,7 +107,12 @@ export const authAPI = {
       }),
       
   // Get current user data
-  getMe: () => api.get('users/me/').then(res => res.data),
+  getMe: () => api.get('users/me/').then(res => {
+    try {
+      localStorage.setItem('user', JSON.stringify(res.data));
+    } catch {}
+    return res.data;
+  }),
   
   // Helper to check if user is authenticated
   isAuthenticated: () => !!localStorage.getItem('token'),
@@ -117,6 +122,25 @@ export const authAPI = {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   }
+};
+
+export const internsAPI = {
+  // List all interns (admin only)
+  list: () => api.get('interns/').then(res => res.data),
+
+  // Retrieve a single intern by user id (admin or self)
+  retrieve: (id) => api.get(`interns/${id}/`).then(res => res.data),
+
+  // Create an intern (admin only)
+  create: ({ name, email, password, department }) =>
+    api.post('interns/', { name, email, password, department }).then(res => res.data),
+};
+
+export const tasksAPI = {
+  // List tasks (admin: all, intern: own)
+  list: () => api.get('tasks/').then(res => res.data),
+  // Create a task (admin only)
+  create: (data) => api.post('tasks/', data).then(res => res.data),
 };
 
 export default api;

@@ -29,7 +29,7 @@ export default function RegisterPage() {
       // Only send name, email, password to the API
       const { name, email, password } = form;
       const data = await authAPI.register({ name, email, password });
-      setMessage(`Admin ${data.name} registered successfully! You can now login.`);
+      setMessage(`Admin ${data.user?.name || name} registered successfully! You can now login.`);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
      setMessage("Error: " + (
@@ -37,6 +37,7 @@ export default function RegisterPage() {
   Object.values(err.response?.data || {})[0]?.[0] || // Show first field error
   "Registration failed"
 ));
+
     } finally {
       setLoading(false);
     }

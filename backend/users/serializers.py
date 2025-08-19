@@ -23,12 +23,16 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     name = serializers.CharField(write_only=True)
+    role = serializers.ChoiceField(choices=User.ROLE_CHOICES, write_only=True, required=False)
 
     class Meta:
         model = User
-        fields = ['name', 'email', 'password']
+        fields = ['name', 'email', 'password', 'role']
         extra_kwargs = {
-            'email': {'required': True}
+            'email': {'required': True},
+            'password': {'write_only': True},
+            'name': {'write_only': True},
+            'role': {'required': False, 'write_only': True},
         }
 
     def create(self, validated_data):
@@ -38,13 +42,16 @@ class RegisterSerializer(serializers.ModelSerializer):
         first_name = name_parts[0] if name_parts else ''
         last_name = name_parts[1] if len(name_parts) > 1 else ''
 
-        # Create user with email as username and set role to ADMIN
+        # Get role from validated data, default to ADMIN if not provided
+        role = validated_data.pop('role', 'ADMIN')
+
+        # Create user with email as username and specified role
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
             first_name=first_name,
             last_name=last_name,
-            role='ADMIN'
+            role=role
         )
         return user
 

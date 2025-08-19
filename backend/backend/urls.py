@@ -23,4 +23,6 @@ urlpatterns = [
     path('', backend_status, name='backend_status'),
     path('admin/', admin.site.urls),
     path('api/users/', include('users.urls')),
+    path('api/interns/', include('interns.urls')),
+    path('api/tasks/', include('tasks.urls')),
 ]

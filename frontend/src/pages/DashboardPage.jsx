@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import DashboardStats from '../components/dashboard/DashboardStats';
 import InternManagement from '../components/dashboard/InternManagement';
 import TaskManagement from '../components/dashboard/TaskManagement';
+import InternForm from '../components/dashboard/InternForm';
+import TaskForm from '../components/dashboard/TaskForm';
+import { internsAPI, tasksAPI } from '../services/api';
 import { 
   FiUsers, FiFileText, FiPieChart, FiCheckCircle, 
   FiBell, FiLogOut, FiHome, FiUser, FiClipboard, FiFile 
@@ -12,6 +15,33 @@ import { FaUserPlus, FaTasks, FaFileExport } from 'react-icons/fa';
 const DashboardPage = () => {
   const { user, logout } = useAuth();
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [showInternForm, setShowInternForm] = useState(false);
+  const [interns, setInterns] = useState([]);
+  const [loadingInterns, setLoadingInterns] = useState(false);
+  const [internsError, setInternsError] = useState('');
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [tasks, setTasks] = useState([
+    { 
+      id: 1, 
+      title: 'Implement User Authentication', 
+      description: 'Create login and registration functionality with proper validation and security measures.',
+      assignedTo: 'Sarah Chen', 
+      dueDate: '2024-03-15', 
+      priority: 'High', 
+      status: 'In Progress', 
+      progress: 65 
+    },
+    { 
+      id: 2, 
+      title: 'Design Mobile UI Components', 
+      description: 'Create responsive UI components for mobile devices following design system guidelines.',
+      assignedTo: 'Mike Johnson', 
+      dueDate: '2024-03-10', 
+      priority: 'Medium', 
+      status: 'Completed', 
+      progress: 100 
+    }
+  ]);
 
   // Mock data for the dashboard since its still in development
   const stats = [
@@ -27,34 +57,7 @@ const DashboardPage = () => {
     { name: 'AI report', action: 'generated for Engineering Team', time: '3 hours ago' }
   ];
 
-  const interns = [
-    { id: 1, name: 'Sarah Cheneka', role: 'Frontend Developer', department: 'Engineering', status: 'Active', progress: 65 },
-    { id: 2, name: 'Mike Johnson', role: 'UI/UX Designer', department: 'Design', status: 'Active', progress: 80 },
-    { id: 3, name: 'Emily Rodriguez', role: 'Marketing Analyst', department: 'Marketing', status: 'Completed', progress: 100 }
-  ];
-
-  const tasks = [
-    { 
-      id: 1, 
-      title: 'Implement User Authentication', 
-      description: 'Create login and registration functionality with proper validation and security measures.',
-      assignedTo: 'Sarah Chen', 
-      dueDate: 'March 15, 2024', 
-      priority: 'High', 
-      status: 'In Progress', 
-      progress: 65 
-    },
-    { 
-      id: 2, 
-      title: 'Design Mobile UI Components', 
-      description: 'Create responsive UI components for mobile devices following design system guidelines.',
-      assignedTo: 'Mike Johnson', 
-      dueDate: 'March 10, 2024', 
-      priority: 'Medium', 
-      status: 'Completed', 
-      progress: 100 
-    }
-  ];
+  // interns are managed in state above
 
   const quickActions = [
     { title: 'Add New Intern', icon: <FaUserPlus className="text-xl" />, action: 'interns' },
@@ -64,7 +67,44 @@ const DashboardPage = () => {
 
   const handleActionClick = (section) => {
     setActiveSection(section);
+    if (section === 'interns') {
+      setShowInternForm(true);
+    }
   };
+
+  // Fetch interns from backend when Interns tab is opened (admin only)
+  useEffect(() => {
+    const fetchInterns = async () => {
+      if (activeSection !== 'interns') return;
+      setLoadingInterns(true);
+      setInternsError('');
+      try {
+        const data = await internsAPI.list();
+        setInterns(data || []);
+      } catch (err) {
+        console.error('Failed to load interns:', err);
+        setInternsError('Failed to load interns');
+      } finally {
+        setLoadingInterns(false);
+      }
+    };
+    fetchInterns();
+  }, [activeSection]);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      if (activeSection !== 'tasks') return;
+      try {
+        const data = await tasksAPI.list();
+        if (Array.isArray(data) && data.length) {
+          setTasks(data);
+        }
+      } catch (err) {
+        // Keep existing demo tasks if backend not ready
+      }
+    };
+    fetchTasks();
+  }, [activeSection]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
@@ -165,14 +205,16 @@ const DashboardPage = () => {
         {activeSection === 'interns' && (
           <InternManagement 
             interns={interns}
-            onAddNew={() => console.log('Add new intern')}
+            loading={loadingInterns}
+            error={internsError}
+            onAddNew={() => setShowInternForm(true)}
           />
         )}
         
         {activeSection === 'tasks' && (
           <TaskManagement 
             tasks={tasks}
-            onCreateTask={() => console.log('Create new task')}
+            onCreateTask={() => setShowTaskForm(true)}
           />
         )}
         
@@ -181,6 +223,27 @@ const DashboardPage = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Reports</h2>
             <p className="text-gray-600">Reports section will be implemented here.</p>
           </div>
+        )}
+        {/* Create Intern Modal */}
+        {showInternForm && (
+          <InternForm 
+            onClose={() => setShowInternForm(false)}
+            onSuccess={(internData) => {
+              setInterns((prev) => [...prev, internData]);
+              setShowInternForm(false);
+            }}
+          />
+        )}
+
+        {/* Create Task Modal */}
+        {showTaskForm && (
+          <TaskForm
+            onClose={() => setShowTaskForm(false)}
+            onSuccess={(task) => {
+              setTasks((prev) => [task, ...prev]);
+              setShowTaskForm(false);
+            }}
+          />
         )}
       </main>
     </div>

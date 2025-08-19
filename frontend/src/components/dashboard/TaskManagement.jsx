@@ -58,21 +58,20 @@ const TaskManagement = ({ tasks, onCreateTask }) => {
                   {task.description || 'No description provided.'}
                 </p>
 
-                {/* Meta Info */}
+                {/* Meta Info, due dates,priority, progress */}
                 <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                  {/* Assigned To */}
                   <div className="flex items-center space-x-2">
                     <FiUser className="h-4 w-4 text-gray-400" />
                     <span>{task.assignedTo}</span>
                   </div>
 
-                  {/* Due Date */}
+                   
                   <div className="flex items-center space-x-2">
                     <FiCalendar className="h-4 w-4 text-gray-400" />
                     <span>Due: {task.dueDate}</span>
                   </div>
 
-                  {/* Priority */}
+                   
                   <div className="flex items-center space-x-2">
                     <FiAlertCircle className={`h-4 w-4 ${
                       task.priority === 'High' ? 'text-red-400' : 
@@ -103,14 +102,14 @@ const TaskManagement = ({ tasks, onCreateTask }) => {
 
               {/* Actions */}
               <div className="flex space-x-2 ml-4">
-                {/* Edit */}
+                
                 <button 
                   className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
                   title="Edit task"
                 >
                   <FiEdit2 className="h-5 w-5" />
                 </button>
-                {/* Delete */}
+                
                 <button 
                   className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition"
                   title="Delete task"

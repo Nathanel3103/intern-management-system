@@ -18,8 +18,12 @@ export default function LoginForm() {
     try {
       const result = await login(email, password);
       if (result.success) {
-        // Redirect to the main dashboard
-        navigate('/dashboard');
+        const role = result.userData?.role;
+        if (role === 'INTERN') {
+          navigate('/intern');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         setError(result.error || 'Login failed. Please try again.');
       }

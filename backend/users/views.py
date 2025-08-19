@@ -17,6 +17,17 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
+        # If there is already at least one user in the system,
+        # only an authenticated ADMIN can create additional users (e.g., interns)
+        if User.objects.exists():
+            is_authenticated = request.user and request.user.is_authenticated
+            is_admin = getattr(request.user, 'role', None) == 'ADMIN'
+            if not (is_authenticated and is_admin):
+                return Response(
+                    { 'detail': 'Only admins can create new users.' },
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()

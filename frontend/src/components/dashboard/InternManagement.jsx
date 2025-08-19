@@ -5,7 +5,7 @@ import {
   FiCheck
 } from 'react-icons/fi';
 
-const InternManagement = ({ interns = [], onAddNew }) => {
+const InternManagement = ({ interns = [], onAddNew, loading = false, error = '' }) => {
   //  easy Debugging
   console.log('Rendering InternManagement with:', { interns, onAddNew });
   
@@ -38,6 +38,14 @@ const InternManagement = ({ interns = [], onAddNew }) => {
           <span>Add New Intern</span>
         </button>
       </div>
+
+      {/* Error/Loading */}
+      {error && (
+        <div className="mb-4 p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">{error}</div>
+      )}
+      {loading && (
+        <div className="mb-4 p-3 rounded-lg text-sm bg-blue-50 text-blue-700 border border-blue-200">Loading interns...</div>
+      )}
 
       {/* Interns Table */}
       <div className="overflow-x-auto rounded-lg border border-gray-200">
