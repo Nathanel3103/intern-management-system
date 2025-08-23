@@ -6,7 +6,22 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 
 from .models import InternProfile
-from .serializers import InternSerializer
+from .serializers import InternSerializer, InternWithProgressSerializer
+
+# List interns with progress and task statistics for admin dashboard
+from rest_framework import generics
+
+class InternWithProgressListView(generics.ListAPIView):
+    serializer_class = InternWithProgressSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = InternProfile.objects.all()
+
+    def get_queryset(self):
+        # Only admins can see all interns
+        if hasattr(self.request.user, 'role') and self.request.user.role == 'ADMIN':
+            return InternProfile.objects.select_related('user').all()
+        # Others see only themselves
+        return InternProfile.objects.filter(user=self.request.user)
 
 
 User = get_user_model()

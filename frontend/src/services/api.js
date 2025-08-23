@@ -107,13 +107,27 @@ export const authAPI = {
       }),
       
   // Get current user data
-  getMe: () => api.get('users/me/').then(res => {
+  getMe: async () => {
     try {
-      localStorage.setItem('user', JSON.stringify(res.data));
-    } catch {}
-    return res.data;
-  }),
-  
+      const res = await api.get('users/me/');
+      if (res?.data) {
+        localStorage.setItem('user', JSON.stringify(res.data));
+        return res.data;
+      }
+      throw new Error("No user data received");
+    } catch (error) {
+      // Clear any stale data if token is invalid/expired
+      localStorage.removeItem('user');
+
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        // redirect to login or show message
+        window.location.href = '/login';
+      }
+
+      throw error; // rethrow so caller can handle
+    }
+  },
+
   // Helper to check if user is authenticated
   isAuthenticated: () => !!localStorage.getItem('token'),
   
@@ -128,6 +142,9 @@ export const internsAPI = {
   // List all interns (admin only)
   list: () => api.get('interns/').then(res => res.data),
 
+  // List interns with progress data
+  listWithProgress: () => api.get('interns-with-progress/').then(res => res.data),
+
   // Retrieve a single intern by user id (admin or self)
   retrieve: (id) => api.get(`interns/${id}/`).then(res => res.data),
 
@@ -138,9 +155,23 @@ export const internsAPI = {
 
 export const tasksAPI = {
   // List tasks (admin: all, intern: own)
-  list: () => api.get('tasks/').then(res => res.data),
+  list: (params) => api.get('tasks/', { params }).then(res => res.data),
+  
   // Create a task (admin only)
   create: (data) => api.post('tasks/', data).then(res => res.data),
+  
+  // Retrieve single task
+  retrieve: (id) => api.get(`tasks/${id}/`).then(res => res.data),
+  
+  // Update (admin any; intern limited fields)
+  update: (id, data) => api.patch(`tasks/${id}/`, data).then(res => res.data),
+  
+  // Delete (admin only)
+  delete: (id) => api.delete(`tasks/${id}/`).then(res => res.data),
+  
+  // Task interaction (start, update progress, complete)
+  interact: (taskId, action, data = {}) => 
+    api.post(`tasks/${taskId}/interact/`, { action, ...data }).then(res => res.data),
 };
 
 export default api;

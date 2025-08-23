@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from interns.models import InternProfile
 
 
@@ -13,6 +14,14 @@ class Task(models.Model):
     STATUS_CHOICES = [
         ("IN_PROGRESS", "In Progress"),
         ("COMPLETED", "Completed"),
+    ]
+    
+    PROGRESS_CHOICES = [
+        (0, "Not Started"),
+        (25, "In Progress - 25%"),
+        (50, "Halfway - 50%"),
+        (75, "Almost Done - 75%"),
+        (100, "Completed"),
     ]
 
     title = models.CharField(max_length=200)
@@ -34,10 +43,35 @@ class Task(models.Model):
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="IN_PROGRESS"
     )
-    progress = models.PositiveIntegerField(default=0)
+    progress = models.PositiveIntegerField(
+        choices=PROGRESS_CHOICES,
+        default=0,
+    )
+    
+    # Track if task has been started
+    is_started = models.BooleanField(default=False)
+
+    # Time tracking
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        # Set started_at when task is first marked as started
+        if self.is_started and not self.started_at:
+            self.started_at = timezone.now()
+        
+        # Set completed_at when progress reaches 100%
+        if self.progress == 100 and not self.completed_at:
+            self.completed_at = timezone.now()
+            self.status = "COMPLETED"
+        elif self.progress < 100 and self.status == "COMPLETED":
+            self.status = "IN_PROGRESS"
+            self.completed_at = None
+            
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         try:

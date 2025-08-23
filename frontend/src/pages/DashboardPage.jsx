@@ -99,12 +99,26 @@ const DashboardPage = () => {
         if (Array.isArray(data) && data.length) {
           setTasks(data);
         }
-      } catch (err) {
+      } catch {
         // Keep existing demo tasks if backend not ready
       }
     };
     fetchTasks();
   }, [activeSection]);
+
+  const handleDeleteTask = async (task) => {
+    try {
+      await tasksAPI.delete(task.id);
+      setTasks((prev) => prev.filter((t) => t.id !== task.id));
+    } catch (err) {
+      console.error('Failed to delete task', err);
+    }
+  };
+
+  const handleEditTask = async (task) => {
+    // Placeholder: open edit modal or inline editor; for now just log
+    console.log('Edit task', task);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
@@ -215,6 +229,8 @@ const DashboardPage = () => {
           <TaskManagement 
             tasks={tasks}
             onCreateTask={() => setShowTaskForm(true)}
+            onDeleteTask={handleDeleteTask}
+            onEditTask={handleEditTask}
           />
         )}
         

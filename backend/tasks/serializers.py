@@ -13,6 +13,13 @@ class TaskSerializer(serializers.ModelSerializer):
     dueDate = serializers.DateField(source="due_date", read_only=True)
     priority_display = serializers.SerializerMethodField(read_only=True)
     status_display = serializers.SerializerMethodField(read_only=True)
+    # Expose time tracking fields
+    started_at = serializers.DateTimeField(required=False, allow_null=True)
+    completed_at = serializers.DateTimeField(required=False, allow_null=True)
+    
+    # Add these new fields to the serializer
+    is_started = serializers.BooleanField(required=False)
+    progress_options = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Task
@@ -29,6 +36,12 @@ class TaskSerializer(serializers.ModelSerializer):
             "status_display",
             "progress",
             "assignedTo",
+            "started_at",
+            "completed_at",
+            "is_started",
+            "progress_options",
+            "created_at",
+            "updated_at",
         ]
         extra_kwargs = {
             "due_date": {"write_only": True},
@@ -68,6 +81,9 @@ class TaskSerializer(serializers.ModelSerializer):
     def get_status_display(self, obj) -> str:
         mapping = {"IN_PROGRESS": "In Progress", "COMPLETED": "Completed"}
         return mapping.get(obj.status, obj.status)
+        
+    def get_progress_options(self, obj):
+        return dict(Task.PROGRESS_CHOICES)
 
     def validate_assigned_to_user_id(self, user_id: int) -> int:
         if not InternProfile.objects.filter(user_id=user_id).exists():
@@ -96,11 +112,14 @@ class TaskSerializer(serializers.ModelSerializer):
         ret["priority"] = self.get_priority_display(instance)
         ret["status"] = self.get_status_display(instance)
         ret["progress"] = instance.progress
+        ret["progress_options"] = self.get_progress_options(instance)
         # Remove write-only/internal fields if present
         ret.pop("assigned_to_user_id", None)
         ret.pop("priority_display", None)
         ret.pop("status_display", None)
         ret.pop("due_date", None)
         return ret
+    
+
 
 
